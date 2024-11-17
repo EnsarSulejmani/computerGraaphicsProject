@@ -12,12 +12,15 @@
     "gsap": "^3.12.5",
     "next": "14.2.1",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "three": "^0.170.0",
+    "three-stdlib": "^2.34.0"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/three": "^0.170.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.1",
     "postcss": "^8",

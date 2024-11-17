@@ -49,10 +49,11 @@ export default function Home() {
   };
 
   return (
-    <div className="w-full h-[100vh] relative bg-[#1c1c1c] text-white">
+    // Global Container
+    <div className="w-full h-[100vh] relative bg-[#1c1c1c] text-white scroll-smooth">
       {/* Global Black Screen */}
       <div
-        className="w-full h-[100vh] bg-black black-screen absolute pointer-events-none"
+        className="w-full h-[100vh] bg-black black-screen fixed pointer-events-none z-50"
         style={{ opacity: 0 }}
       ></div>
 
