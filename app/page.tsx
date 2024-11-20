@@ -11,7 +11,9 @@ export default function Home() {
   const [StateMachine, setStateMachine] = useState(0);
   const [Hide, setHide] = useState(" hidden ");
   const [Show, setShow] = useState("");
-  const [IsLoading, SetIsLoading] = useState(0);
+  const [IsLoading, setIsLoading] = useState(0);
+  const [HasBuilding, setHasBuilding] = useState(false);
+  const [BuildingModelName, setBuildingModelName] = useState("");
 
   const animateBlackScreen = (toOpacity: number, onComplete?: () => void) => {
     gsap.to(".black-screen", {
@@ -24,7 +26,7 @@ export default function Home() {
   const ChangeState = () => {
     if (IsLoading) return; // Prevent simultaneous triggers
 
-    SetIsLoading(1); // Set loading state
+    setIsLoading(1); // Set loading state
     animateBlackScreen(1, () => {
       // Callback after animation completes
       switch (StateMachine) {
@@ -32,18 +34,21 @@ export default function Home() {
           setStateMachine(1);
           setHide("");
           setShow(" hidden ");
+          console.log(BuildingModelName);
           break;
         case 1:
           setStateMachine(0);
           setHide(" hidden ");
           setShow("");
+          console.log(BuildingModelName);
+
           break;
         default:
           console.log("Cannot Change Scene");
       }
 
       animateBlackScreen(0, () => {
-        SetIsLoading(0); // End loading state
+        setIsLoading(0); // End loading state
       });
     });
   };
@@ -59,8 +64,12 @@ export default function Home() {
 
       {/* Content */}
       <div>
-        <InfinitePlain visibility={Show} />
-        <PortfolioList visibility={Show} />
+        <InfinitePlain visibility={Show} hasBuildingSelected={HasBuilding} />
+        <PortfolioList
+          visibility={Show}
+          setBuildingModelName={setBuildingModelName}
+          setHasBuilding={setHasBuilding}
+        />
         <CompanyInfo visibility={Show} />
 
         <SimulatedGame visibility={Hide} />

@@ -5,6 +5,7 @@ import * as THREE from "three";
 
 type Props = {
   visibility: string;
+  hasBuildingSelected: boolean;
 };
 
 export default function InfinitePlain(props: Props) {
@@ -109,12 +110,23 @@ export default function InfinitePlain(props: Props) {
           Welcome to the interactive portfolio of LINE9, your best architecture
           firm in all of North Macedonia
         </p>
-        <a
-          href="#catalogue"
-          className="border-2 border-white px-4 py-2 rounded-md my-2 hover:bg-yellow-300 ease-in-out duration-300"
-        >
-          Catalogue
-        </a>
+        {props.hasBuildingSelected == false ? (
+          <a
+            href="#catalogue"
+            className="border-2 border-white px-4 py-2 rounded-md my-2 hover:bg-yellow-300 ease-in-out duration-300"
+          >
+            Catalogue
+          </a>
+        ) : (
+          <button
+            className="border-2 border-white px-4 py-2 rounded-md my-2 hover:bg-yellow-300 ease-in-out duration-300"
+            onClick={() => {
+              console.log("Building is loaded and transition is ready");
+            }}
+          >
+            View in 3d
+          </button>
+        )}
       </div>
     </div>
   );
