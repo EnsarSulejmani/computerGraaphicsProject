@@ -6,9 +6,14 @@ import * as THREE from "three";
 type Props = {
   visibility: string;
   hasBuildingSelected: boolean;
+  ChangeState: () => void;
 };
 
-export default function InfinitePlain(props: Props) {
+export default function InfinitePlain({
+  visibility,
+  hasBuildingSelected,
+  ChangeState,
+}: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const [SpeedPlane, setSpeedPlane] = useState(0.1);
 
@@ -98,7 +103,7 @@ export default function InfinitePlain(props: Props) {
   return (
     <div
       ref={mountRef}
-      className={`w-full h-full overflow-x-hidden relative ${props.visibility}`}
+      className={`w-full h-full overflow-x-hidden relative ${visibility}`}
     >
       <div
         className={`w-full h-[100vh] absolute overflow-x-hidden flex flex-col justify-center items-center`}
@@ -110,7 +115,7 @@ export default function InfinitePlain(props: Props) {
           Welcome to the interactive portfolio of LINE9, your best architecture
           firm in all of North Macedonia
         </p>
-        {props.hasBuildingSelected == false ? (
+        {hasBuildingSelected == false ? (
           <a
             href="#catalogue"
             className="border-2 border-white px-4 py-2 rounded-md my-2 hover:bg-yellow-300 ease-in-out duration-300"
@@ -122,6 +127,7 @@ export default function InfinitePlain(props: Props) {
             className="border-2 border-white px-4 py-2 rounded-md my-2 hover:bg-yellow-300 ease-in-out duration-300"
             onClick={() => {
               console.log("Building is loaded and transition is ready");
+              ChangeState();
             }}
           >
             View in 3d

@@ -64,7 +64,11 @@ export default function Home() {
 
       {/* Content */}
       <div>
-        <InfinitePlain visibility={Show} hasBuildingSelected={HasBuilding} />
+        <InfinitePlain
+          visibility={Show}
+          hasBuildingSelected={HasBuilding}
+          ChangeState={ChangeState}
+        />
         <PortfolioList
           visibility={Show}
           setBuildingModelName={setBuildingModelName}
@@ -72,7 +76,7 @@ export default function Home() {
         />
         <CompanyInfo visibility={Show} />
 
-        <SimulatedGame visibility={Hide} />
+        <SimulatedGame visibility={Hide} modelToRender={BuildingModelName} />
       </div>
 
       <div>
