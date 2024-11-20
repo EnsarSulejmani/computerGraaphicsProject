@@ -29,13 +29,16 @@ export default function PortfolioList({
         <ul className="w-[960px] h-auto space-y-12">
           {/* Mapping Buildings */}
           {buildingModelNames.name.map((name, k) => (
-            <li className="flex justify-between items-center" key={k}>
+            <li
+              className="flex flex-wrap justify-center py-12 lg:justify-between items-center lg:py-0"
+              key={k}
+            >
               {/* Background of the image */}
-              <div className="bg-yellow-300 rotate-12 w-[400px] h-[400px] relative">
+              <div className="bg-yellow-300 rotate-12 w-[400px] h-[400px] relative -z-50">
                 {/* Image placeholder */}
                 <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-3xl  -rotate-12 w-[400px] h-[400px] absolute"></div>
               </div>
-              <div className="w-[400px] h-full space-y-4">
+              <div className="w-[400px] h-full space-y-4 mt-12 lg:mt-0">
                 <h1 className="text-4xl font-bold">{name}</h1>
                 <p>
                   This is the description of the buildin It is a long
