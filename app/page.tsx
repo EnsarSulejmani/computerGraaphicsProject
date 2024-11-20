@@ -14,6 +14,19 @@ export default function Home() {
   const [IsLoading, setIsLoading] = useState(0);
   const [HasBuilding, setHasBuilding] = useState(false);
   const [BuildingModelName, setBuildingModelName] = useState("");
+  const [planeAnimationVariables, setplaneAnimationVariables] = useState({
+    SpeedPlane: 0.1,
+    CameraRotationState: 0,
+    CameraMovement: 5,
+  });
+
+  const tl = gsap.timeline();
+  tl.to(planeAnimationVariables, {
+    keyframes: {
+      "100%": { SpeedPlane: 0, CameraRotationState: -1.2, CameraMovement: 2.5 },
+    },
+    duration: 3,
+  });
 
   const animateBlackScreen = (toOpacity: number, onComplete?: () => void) => {
     gsap.to(".black-screen", {
@@ -68,6 +81,7 @@ export default function Home() {
           visibility={Show}
           hasBuildingSelected={HasBuilding}
           ChangeState={ChangeState}
+          animationVariables={planeAnimationVariables}
         />
         <PortfolioList
           visibility={Show}

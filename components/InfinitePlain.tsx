@@ -7,23 +7,29 @@ type Props = {
   visibility: string;
   hasBuildingSelected: boolean;
   ChangeState: () => void;
+  animationVariables: {
+    SpeedPlane: number;
+    CameraRotationState: number;
+    CameraMovement: number;
+  };
 };
 
 export default function InfinitePlain({
   visibility,
   hasBuildingSelected,
   ChangeState,
+  animationVariables,
 }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
-  const [SpeedPlane, setSpeedPlane] = useState(0.1);
+  // const [SpeedPlane, setSpeedPlane] = useState(0.1);
 
   // Use a ref to store the current speed
-  const speedRef = useRef(SpeedPlane);
+  const speedRef = useRef(animationVariables.SpeedPlane);
 
   // Update the ref whenever SpeedPlane changes
   useEffect(() => {
-    speedRef.current = SpeedPlane;
-  }, [SpeedPlane]);
+    speedRef.current = animationVariables.SpeedPlane;
+  }, [animationVariables.SpeedPlane]);
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -39,8 +45,12 @@ export default function InfinitePlain({
       0.1,
       100
     );
-    camera.position.set(0, 5, 10);
+    //y: 2.5 value needed to move down
+    camera.position.set(0, animationVariables.CameraMovement, 10);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+    //-1.2 Rotation needed to look down
+    camera.rotateX(animationVariables.CameraRotationState);
 
     // Plane Geometry & Material (gray base color)
     const planeGeo = new THREE.PlaneGeometry(150, 100, 10, 10);
@@ -111,7 +121,7 @@ export default function InfinitePlain({
         <h1 className="text-[10em] drop-shadow-md text-yellow-300 font-bold">
           LINE9
         </h1>
-        <p className="text-2xl max-w-[960px] text-center mb-5">
+        <p className="text-2xl max-w-[960px] text-center mb-5 font-thin">
           Welcome to the interactive portfolio of LINE9, your best architecture
           firm in all of North Macedonia
         </p>
