@@ -1,5 +1,5 @@
 import { render } from "@react-three/fiber";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -12,7 +12,7 @@ export default function SimulatedGame({ visibility, modelToRender }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<PointerLockControls | null>(null);
-
+  const [BuildingName, setBuilidngName] = useState(modelToRender); // State to track scenes
   useEffect(() => {
     if (!mountRef.current) return;
 
@@ -59,7 +59,8 @@ export default function SimulatedGame({ visibility, modelToRender }: Props) {
 
     //Models
     const loader = new GLTFLoader();
-    switch (modelToRender) {
+    setBuilidngName(modelToRender);
+    switch (BuildingName) {
       case "baroque":
         //Model 1
         loader.load("/buildings/baroque/scene.gltf", (gltf) => {
@@ -76,13 +77,59 @@ export default function SimulatedGame({ visibility, modelToRender }: Props) {
         //model 3
         break;
       default:
-        console.log(modelToRender);
+        console.log(BuildingName);
         console.log("No model was found");
     }
 
+    // Movement handling
+    let moveForward = false,
+      moveBackward = false,
+      moveLeft = false,
+      moveRight = false;
+
+    const handleKeyDown = (event: any) => {
+      switch (event.code) {
+        case "KeyW":
+          moveForward = true;
+          break;
+        case "KeyS":
+          moveBackward = true;
+          break;
+        case "KeyA":
+          moveLeft = true;
+          break;
+        case "KeyD":
+          moveRight = true;
+          break;
+      }
+    };
+
+    const handleKeyUp = (event: any) => {
+      switch (event.code) {
+        case "KeyW":
+          moveForward = false;
+          break;
+        case "KeyS":
+          moveBackward = false;
+          break;
+        case "KeyA":
+          moveLeft = false;
+          break;
+        case "KeyD":
+          moveRight = false;
+          break;
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
+
     const animate = () => {
       requestAnimationFrame(animate);
-
+      if (moveForward) controls.moveForward(0.1);
+      if (moveBackward) controls.moveForward(-0.1);
+      if (moveLeft) controls.moveRight(-0.1);
+      if (moveRight) controls.moveRight(0.1);
       renderer.render(scene, camera);
     };
     animate();
@@ -98,7 +145,9 @@ export default function SimulatedGame({ visibility, modelToRender }: Props) {
       ref={mountRef}
       className={`w-full h-full overflow-x-hidden ${visibility}`}
     >
-      {/* <div className={`text-lg${visibility}`}>{modelToRender}</div> */}
+      <div className={`text-lg${visibility}`}>
+        {modelToRender}, {BuildingName}
+      </div>
     </div>
   );
 }
