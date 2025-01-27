@@ -102,7 +102,7 @@ export default function Home() {
     <div className="w-full h-[100vh] relative bg-[#1c1c1c] text-white scroll-smooth">
       {/* Global Black Screen */}
       <div
-        className="w-full h-[100vh] bg-black black-screen fixed pointer-events-none z-50"
+        className="w-full h-[100vh] bg-[#1c1c1c] black-screen fixed pointer-events-none z-50"
         style={{ opacity: 0 }}
       ></div>
 
