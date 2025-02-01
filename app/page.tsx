@@ -25,77 +25,107 @@ export default function Home() {
 
     setIsLoading(1); // Set loading state
 
-    const tl = gsap.timeline({
-      onComplete: () => {
-        switch (StateMachine) {
-          case 0: // Transition to 3D scene
-            setStateMachine(1);
-            setHide("");
-            setShow(" hidden ");
-            console.log("Switching to Simulated Game Scene");
-            break;
-          case 1: // Transition to portfolio scene
-            setStateMachine(0);
-            setHide(" hidden ");
-            setShow("");
-            console.log("Switching to Infinite Plane Scene");
-            break;
-          default:
-            console.error("Invalid state");
-        }
+    // Check if the current scene is 1 (Simulated Game)
+    if (StateMachine === 1) {
+      // Only animate the black screen fade
+      gsap.to(".black-screen", {
+        opacity: 1,
+        duration: 0.8,
+        ease: "power2.inOut",
+        onComplete: () => {
+          // Switch state and update visibility
+          setStateMachine(0);
+          setHide(" hidden ");
+          setShow("");
+          console.log("Switching to Infinite Plane Scene");
 
-        // Fade out the black screen
-        gsap.to(".black-screen", {
-          opacity: 0,
-          duration: 0.5,
-          ease: "power1.out",
-          onComplete: () => {
-            setplaneAnimationVariables((prev) => ({
-              ...prev,
-              SpeedPlane: 0.1, // Reset plane speed
-              CameraRotationState: 0, // Reset camera rotation
-              CameraMovement: 5, // Reset camera movement
-            }));
-            setIsLoading(0); // Reset loading state
-          },
-        });
-      },
-    });
-
-    // Animate plane properties and camera position
-    tl.to(planeAnimationVariables, {
-      SpeedPlane: 0, // Stop the plane's movement
-      duration: 0.6, // Fast abrupt stop (20% of animation)
-      ease: "power2.out",
-      onUpdate: () => {
-        setplaneAnimationVariables((prev) => ({
-          ...prev,
-          SpeedPlane: planeAnimationVariables.SpeedPlane,
-        }));
-      },
-    })
-      .to(
-        planeAnimationVariables,
-        {
-          CameraRotationState: -1.2,
-          CameraMovement: 2.5,
-          duration: 2.4, // Rest of the animation duration
-          ease: "expo.in", // Smooth transition for fall effect
-          onUpdate: () => {
-            setplaneAnimationVariables((prev) => ({
-              ...prev,
-              CameraRotationState: planeAnimationVariables.CameraRotationState,
-              CameraMovement: planeAnimationVariables.CameraMovement,
-            }));
-          },
+          // Fade out the black screen after switching state
+          gsap.to(".black-screen", {
+            opacity: 0,
+            duration: 0.5,
+            ease: "power1.out",
+            onComplete: () => {
+              setIsLoading(0); // Reset loading state
+            },
+          });
         },
-        "<" // Start immediately after the first animation
-      )
-      .to(
-        ".black-screen",
-        { opacity: 1, duration: 0.8, ease: "power2.inOut" },
-        "<75%" // Start fading black screen at 85% of total animation
-      );
+      });
+    } else {
+      // Full animation timeline for state 0 (Infinite Plane Scene)
+      const tl = gsap.timeline({
+        onComplete: () => {
+          // Switch state and update visibility after timeline finishes
+          switch (StateMachine) {
+            case 0: // Transition to 3D scene
+              setStateMachine(1);
+              setHide("");
+              setShow(" hidden ");
+              console.log("Switching to Simulated Game Scene");
+              break;
+            case 1: // (This branch wouldn't be hit here because of our if check above)
+              setStateMachine(0);
+              setHide(" hidden ");
+              setShow("");
+              console.log("Switching to Infinite Plane Scene");
+              break;
+            default:
+              console.error("Invalid state");
+          }
+
+          // Fade out the black screen
+          gsap.to(".black-screen", {
+            opacity: 0,
+            duration: 0.5,
+            ease: "power1.out",
+            onComplete: () => {
+              setplaneAnimationVariables((prev) => ({
+                ...prev,
+                SpeedPlane: 0.1, // Reset plane speed
+                CameraRotationState: 0, // Reset camera rotation
+                CameraMovement: 5, // Reset camera movement
+              }));
+              setIsLoading(0); // Reset loading state
+            },
+          });
+        },
+      });
+
+      // Animate plane properties and camera position
+      tl.to(planeAnimationVariables, {
+        SpeedPlane: 0, // Stop the plane's movement
+        duration: 0.6, // Fast abrupt stop (20% of animation)
+        ease: "power2.out",
+        onUpdate: () => {
+          setplaneAnimationVariables((prev) => ({
+            ...prev,
+            SpeedPlane: planeAnimationVariables.SpeedPlane,
+          }));
+        },
+      })
+        .to(
+          planeAnimationVariables,
+          {
+            CameraRotationState: -1.2,
+            CameraMovement: 2.5,
+            duration: 2.4, // Rest of the animation duration
+            ease: "expo.in", // Smooth transition for fall effect
+            onUpdate: () => {
+              setplaneAnimationVariables((prev) => ({
+                ...prev,
+                CameraRotationState:
+                  planeAnimationVariables.CameraRotationState,
+                CameraMovement: planeAnimationVariables.CameraMovement,
+              }));
+            },
+          },
+          "<" // Start immediately after the first animation
+        )
+        .to(
+          ".black-screen",
+          { opacity: 1, duration: 0.8, ease: "power2.inOut" },
+          "<75%" // Start fading black screen at 75% of total animation
+        );
+    }
   };
 
   return (
