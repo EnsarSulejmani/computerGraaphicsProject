@@ -17,7 +17,7 @@ export default function PortfolioList({
   }
 
   const buildingModelNames = {
-    name: ["baroque", "classic", "modern"],
+    name: ["Asian", "Classic", "Modern"],
   };
 
   return (

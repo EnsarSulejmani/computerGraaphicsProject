@@ -1,0 +1,11 @@
+Model Information:
+* title:	[DAE] Final Assignment Milestone: House
+* source:	https://sketchfab.com/3d-models/dae-final-assignment-milestone-house-58a9edfc71ab4adc869061d4e5e862d1
+* author:	Joan Tieu (https://sketchfab.com/JoanTieu)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "[DAE] Final Assignment Milestone: House" (https://sketchfab.com/3d-models/dae-final-assignment-milestone-house-58a9edfc71ab4adc869061d4e5e862d1) by Joan Tieu (https://sketchfab.com/JoanTieu) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
