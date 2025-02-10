@@ -151,18 +151,11 @@ export default function Home() {
         />
         <CompanyInfo visibility={Show} />
 
-        <SimulatedGame visibility={Hide} modelToRender={BuildingModelName} />
-      </div>
-
-      {/* Debugging Section */}
-      <div>
-        <button
-          onClick={ChangeState}
-          className="border border-white px-4 py-2 rounded-sm my-2"
-        >
-          Change Scene
-        </button>
-        <p className="text-lg">The current scene is {StateMachine}</p>
+        <SimulatedGame
+          visibility={Hide}
+          modelToRender={BuildingModelName}
+          ChangeState={ChangeState}
+        />
       </div>
     </div>
   );

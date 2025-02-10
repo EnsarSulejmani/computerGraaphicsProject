@@ -115,10 +115,10 @@ export default function InfinitePlain({
     >
       <div className="absolute w-full h-full flex flex-col justify-center items-center">
         <h1 className="text-[10em] drop-shadow-md text-yellow-300 font-bold">
-          LINE9
+          CENTIMETRI
         </h1>
         <p className="text-2xl max-w-[960px] text-center mb-5 font-thin">
-          Welcome to the interactive portfolio of LINE9.
+          Welcome to the interactive portfolio of Centimetri Architecture.
         </p>
         {hasBuildingSelected ? (
           <button
