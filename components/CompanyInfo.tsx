@@ -2,9 +2,9 @@ type Props = {
   visibility: string;
 };
 
-export default function CompanyInfo() {
+export default function CompanyInfo({ visibility }: Props) {
   return (
-    <div className="bg-[#1c1c1c] text-white">
+    <div className={`bg-[#1c1c1c] text-white ${visibility} mt-8`}>
       {/* About Section */}
       <section className="max-w-6xl mx-auto py-16 px-6">
         <div className="grid md:grid-cols-2 gap-8 items-center">

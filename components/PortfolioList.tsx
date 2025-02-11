@@ -1,3 +1,5 @@
+import buildingData from "@/public/json/buildings.json";
+
 type Props = {
   visibility: string;
   setBuildingModelName: (name: string) => void;
@@ -16,40 +18,40 @@ export default function PortfolioList({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const buildingModelNames = {
-    name: ["Asian", "Classic", "Modern"],
-  };
+  //Get this from json file
+  const buildingModelNames = buildingData.buildings;
 
   return (
-    <div>
+    <div className="">
       <div
         className={`w-full h-full flex justify-center mt-16 ${visibility}`}
         id="catalogue"
       >
         <ul className="w-[960px] h-auto space-y-12">
           {/* Mapping Buildings */}
-          {buildingModelNames.name.map((name, k) => (
+          {buildingModelNames.map((model, k) => (
             <li
               className="flex flex-wrap justify-center py-12 lg:justify-between items-center lg:py-0"
               key={k}
             >
               {/* Background of the image */}
-              <div className="bg-yellow-300 rotate-12 w-[400px] h-[400px] relative -z-50">
+              <div className="bg-yellow-300 rotate-6 w-[400px] h-[400px] relative -z-50">
                 {/* Image placeholder */}
-                <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-3xl  -rotate-12 w-[400px] h-[400px] absolute"></div>
+                <img
+                  src={`/images/catalogImages/${model.name}.png`}
+                  className=" object-fill w-[400px] h-[400px] -rotate-6"
+                ></img>
               </div>
               <div className="w-[400px] h-full space-y-4 mt-12 lg:mt-0">
-                <h1 className="text-4xl font-bold">{name}</h1>
-                <p>
-                  This is the description of the buildin It is a long
-                  established fact that a reader will be distracted by the
-                  readable content of a page when looking at its layout.{" "}
-                </p>
+                <h1 className="text-4xl font-bold text-yellow-300">
+                  {model.name}
+                </h1>
+                <p>{model.description}</p>
                 <button
-                  className="border-2 border-white px-4 py-2 rounded-md my-2 hover:bg-yellow-300 ease-in-out duration-300"
-                  value={name}
+                  className="border-2 border-white px-4 py-2 rounded-md my-2 hover:bg-gradient-to-r from-red-500 to-orange-500 ease-in-out duration-300"
+                  value={model.name}
                   onClick={() => {
-                    setBuildingModelName(name);
+                    setBuildingModelName(model.name);
                     setHasBuilding(true);
                     scrollToTop();
                   }}

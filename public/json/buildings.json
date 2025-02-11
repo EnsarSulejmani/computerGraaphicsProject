@@ -1,0 +1,16 @@
+{
+  "buildings": [
+    {
+      "name": "Asian",
+      "description": "The Asian building model is inspired by traditional East Asian architecture. It features elegant sweeping rooflines, subtle ornamentation, and a harmonious blend of natural materials that evoke a serene and culturally rich atmosphere. This design is perfect for projects seeking a balanced and minimalist aesthetic with a nod to heritage."
+    },
+    {
+      "name": "Classic",
+      "description": "The Classic building model offers a timeless brick design that exudes historical charm and refined symmetry. It combines traditional construction techniques with enduring craftsmanship to create an inviting and stable presence. Ideal for projects that value heritage and an elegant, established look, this model remains versatile across various design applications."
+    },
+    {
+      "name": "Modern",
+      "description": "The Modern building model showcases sleek lines, expansive glass facades, and innovative structural design. With its clean aesthetics and futuristic appeal, it reflects the cutting edge of contemporary architecture. This model is perfect for urban environments and forward-thinking projects that demand sophistication and minimalism."
+    }
+  ]
+}
