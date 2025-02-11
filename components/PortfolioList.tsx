@@ -38,7 +38,7 @@ export default function PortfolioList({
               <div className="bg-yellow-300 rotate-6 w-[400px] h-[400px] relative -z-50">
                 {/* Image placeholder */}
                 <img
-                  src={`/images/catalogImages/${model.name}.png`}
+                  src={`/images/CatalogImages/${model.name}.png`}
                   className=" object-fill w-[400px] h-[400px] -rotate-6"
                 ></img>
               </div>

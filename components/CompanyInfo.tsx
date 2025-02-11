@@ -120,6 +120,114 @@ export default function CompanyInfo({ visibility }: Props) {
         </div>
       </section>
 
+      {/* Model creditation */}
+      <div className="flex flex-col justify-center items-center mb-8">
+        <div>Models of the buildings can be found here:</div>
+        <div className="space-y-4">
+          <div>
+            <div>"Asian"</div>
+            <div>
+              This work is based on{" "}
+              <a
+                href="https://sketchfab.com/3d-models/dae-final-assignment-milestone-house-58a9edfc71ab4adc869061d4e5e862d1"
+                className="text-yellow-300 underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                "[DAE] Final Assignment Milestone: House"
+              </a>{" "}
+              by{" "}
+              <a
+                href="https://sketchfab.com/JoanTieu"
+                className="text-yellow-300 underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Joan Tieu
+              </a>
+              , licensed under{" "}
+              <a
+                href="http://creativecommons.org/licenses/by/4.0/"
+                className="text-yellow-300 underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                CC-BY-4.0
+              </a>
+              .
+            </div>
+          </div>
+
+          <div>
+            <div>"Modern"</div>
+            <div>
+              This work is based on{" "}
+              <a
+                href="https://sketchfab.com/3d-models/modern-luxury-villa-house-building-with-pool-0e858284939343cb994233d40a48a20a"
+                className="text-yellow-300 underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                "Modern luxury villa house building with pool"
+              </a>{" "}
+              by{" "}
+              <a
+                href="https://sketchfab.com/saakbary64"
+                className="text-yellow-300 underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                saeedakbari
+              </a>
+              , licensed under{" "}
+              <a
+                href="http://creativecommons.org/licenses/by/4.0/"
+                className="text-yellow-300 underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                CC-BY-4.0
+              </a>
+              .
+            </div>
+          </div>
+
+          <div>
+            <div>"Classic"</div>
+            <div>
+              This work is based on{" "}
+              <a
+                href="https://sketchfab.com/3d-models/small-brick-house-c9ef0a360eff405682015c8813eee41d"
+                className="text-yellow-300 underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                "Small Brick House"
+              </a>{" "}
+              by{" "}
+              <a
+                href="https://sketchfab.com/jimbogies"
+                className="text-yellow-300 underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                jimbogies
+              </a>
+              , licensed under{" "}
+              <a
+                href="http://creativecommons.org/licenses/by/4.0/"
+                className="text-yellow-300 underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                CC-BY-4.0
+              </a>
+              .
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Footer */}
       <footer className="bg-[#121212] text-white py-8 text-center">
         <p>© 2025 CENTIMETRI. All Rights Reserved.</p>

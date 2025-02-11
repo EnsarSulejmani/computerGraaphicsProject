@@ -115,10 +115,13 @@ export default function InfinitePlain({
     >
       <div className="absolute w-full h-full flex flex-col justify-center items-center">
         <h1 className="text-[10em] drop-shadow-md text-yellow-300 font-bold">
-          CENTIMETRI
+          SwanSpace
         </h1>
         <p className="text-2xl max-w-[960px] text-center mb-5 font-thin">
-          Welcome to the interactive portfolio of Centimetri Architecture.
+          Welcome to the interactive portfolio of SwanSpace Architecture.
+          <br />
+          Disclaimer! This is a computer science course project, and not a real
+          architecture firm.
         </p>
         {hasBuildingSelected ? (
           <button
