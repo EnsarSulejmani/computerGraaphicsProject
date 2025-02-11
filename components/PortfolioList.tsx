@@ -1,4 +1,5 @@
 import buildingData from "@/public/json/buildings.json";
+import Image from "next/image";
 
 type Props = {
   visibility: string;
@@ -37,10 +38,11 @@ export default function PortfolioList({
               {/* Background of the image */}
               <div className="bg-yellow-300 rotate-6 w-[400px] h-[400px] relative -z-50">
                 {/* Image placeholder */}
-                <img
+                <Image
+                  alt={`${model.name} building`}
                   src={`/images/CatalogImages/${model.name}.png`}
                   className=" object-fill w-[400px] h-[400px] -rotate-6"
-                ></img>
+                ></Image>
               </div>
               <div className="w-[400px] h-full space-y-4 mt-12 lg:mt-0">
                 <h1 className="text-4xl font-bold text-yellow-300">
