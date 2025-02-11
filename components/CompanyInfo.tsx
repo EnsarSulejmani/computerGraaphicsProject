@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 type Props = {
   visibility: string;
 };
@@ -38,7 +40,7 @@ export default function CompanyInfo({ visibility }: Props) {
           <div className="mt-10 grid md:grid-cols-2 gap-6">
             {/* Project 1 - Modern */}
             <div className="relative group overflow-hidden">
-              <img
+              <Image
                 src="/images/modern.jpg"
                 className="rounded-lg transition-transform duration-300 group-hover:scale-105"
                 alt="Modern"
@@ -50,7 +52,7 @@ export default function CompanyInfo({ visibility }: Props) {
 
             {/* Project 2 - Asian */}
             <div className="relative group overflow-hidden">
-              <img
+              <Image
                 src="/images/asian.jpg"
                 className="rounded-lg transition-transform duration-300 group-hover:scale-105"
                 alt="Asian"
@@ -61,7 +63,7 @@ export default function CompanyInfo({ visibility }: Props) {
             </div>
             {/* Project 3 - Classic */}
             <div className="relative group overflow-hidden">
-              <img
+              <Image
                 src="/images/classic.jpg"
                 className="rounded-lg transition-transform duration-300 group-hover:scale-105"
                 alt="Classic"
@@ -125,7 +127,7 @@ export default function CompanyInfo({ visibility }: Props) {
         <div>Models of the buildings can be found here:</div>
         <div className="space-y-4">
           <div>
-            <div>"Asian"</div>
+            <div>&quot;Asian&quot;</div>
             <div>
               This work is based on{" "}
               <a
@@ -134,7 +136,7 @@ export default function CompanyInfo({ visibility }: Props) {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                "[DAE] Final Assignment Milestone: House"
+                &quot;[DAE] Final Assignment Milestone: House&quot;
               </a>{" "}
               by{" "}
               <a
@@ -159,7 +161,7 @@ export default function CompanyInfo({ visibility }: Props) {
           </div>
 
           <div>
-            <div>"Modern"</div>
+            <div>&quot;Modern&quot;</div>
             <div>
               This work is based on{" "}
               <a
@@ -168,7 +170,7 @@ export default function CompanyInfo({ visibility }: Props) {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                "Modern luxury villa house building with pool"
+                &quot;Modern luxury villa house building with pool&quot;
               </a>{" "}
               by{" "}
               <a
@@ -193,7 +195,7 @@ export default function CompanyInfo({ visibility }: Props) {
           </div>
 
           <div>
-            <div>"Classic"</div>
+            <div>&quot;Classic&quot;</div>
             <div>
               This work is based on{" "}
               <a
@@ -202,7 +204,7 @@ export default function CompanyInfo({ visibility }: Props) {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                "Small Brick House"
+                &quot;Small Brick House&quot;
               </a>{" "}
               by{" "}
               <a
