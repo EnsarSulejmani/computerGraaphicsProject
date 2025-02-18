@@ -232,7 +232,7 @@ export default function CompanyInfo({ visibility }: Props) {
 
       {/* Footer */}
       <footer className="bg-[#121212] text-white py-8 text-center">
-        <p>© 2025 CENTIMETRI. All Rights Reserved.</p>
+        <p>© 2025 SwanSpace. All Rights Reserved.</p>
         <p className="mt-2">
           <a href="#" className="text-yellow-300">
             Privacy Policy
