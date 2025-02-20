@@ -42,7 +42,9 @@ export default function CompanyInfo({ visibility }: Props) {
             <div className="relative group overflow-hidden">
               <Image
                 src="/images/modern.jpg"
-                className="rounded-lg transition-transform duration-300 group-hover:scale-105"
+                className="rounded-lg w-full h-full transition-transform duration-300 group-hover:scale-105"
+                width={530}
+                height={400}
                 alt="Modern"
               />
               <div className="absolute inset-0 bg-[#1c1c1c] bg-opacity-70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -54,7 +56,9 @@ export default function CompanyInfo({ visibility }: Props) {
             <div className="relative group overflow-hidden">
               <Image
                 src="/images/asian.jpg"
-                className="rounded-lg transition-transform duration-300 group-hover:scale-105"
+                className="rounded-lg w-full h-full transition-transform duration-300 group-hover:scale-105"
+                width={530}
+                height={400}
                 alt="Asian"
               />
               <div className="absolute inset-0 bg-[#1c1c1c] bg-opacity-70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -65,7 +69,9 @@ export default function CompanyInfo({ visibility }: Props) {
             <div className="relative group overflow-hidden">
               <Image
                 src="/images/classic.jpg"
-                className="rounded-lg transition-transform duration-300 group-hover:scale-105"
+                className="rounded-lg w-full h-full transition-transform duration-300 group-hover:scale-105"
+                width={530}
+                height={400}
                 alt="Classic"
               />
               <div className="absolute inset-0 bg-[#1c1c1c] bg-opacity-70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">

@@ -41,6 +41,8 @@ export default function PortfolioList({
                 <Image
                   alt={`${model.name} building`}
                   src={`/images/CatalogImages/${model.name}.png`}
+                  width={400}
+                  height={400}
                   className=" object-fill w-[400px] h-[400px] -rotate-6"
                 ></Image>
               </div>
