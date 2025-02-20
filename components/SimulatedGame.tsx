@@ -22,15 +22,42 @@ export default function SimulatedGame({
   const mountRef = useRef<HTMLDivElement | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<PointerLockControls | null>(null);
-
-  // Save our scene so we can later add/update the skybox mesh.
   const sceneRef = useRef<THREE.Scene | null>(null);
-  // Also keep a ref for ambient light.
   const ambientLightRef = useRef<THREE.AmbientLight | null>(null);
-  // Ref to hold our skybox mesh.
   const skyboxRef = useRef<THREE.Mesh | null>(null);
 
-  // State for fog parameters and ambient (sky) color.
+  // --- Preload models ---
+  const modelsRef = useRef<{ [key: string]: THREE.Object3D }>({});
+  const currentModelRef = useRef<THREE.Object3D | null>(null);
+
+  // --- Preload skybox textures ---
+  // This will store CubeTextures for each atmosphere: "foggy", "sunny", "sunset"
+  const skyboxTexturesRef = useRef<{ [key: string]: THREE.CubeTexture }>({});
+
+  // Preload skybox textures on mount.
+  useEffect(() => {
+    const loader = new THREE.CubeTextureLoader();
+    const atmospheres = ["foggy", "sunny", "sunset"];
+    atmospheres.forEach((atmo) => {
+      const basePath = `/cubeMapTextures/${atmo}/`;
+      loader.load(
+        [
+          `${basePath}px.jpg`,
+          `${basePath}nx.jpg`,
+          `${basePath}py.jpg`,
+          `${basePath}ny.jpg`,
+          `${basePath}pz.jpg`,
+          `${basePath}nz.jpg`,
+        ],
+        (cubeTexture) => {
+          skyboxTexturesRef.current[atmo] = cubeTexture;
+          console.log(`${atmo} skybox texture loaded.`);
+        }
+      );
+    });
+  }, []);
+
+  // --- Fog and Sky state ---
   const [fogParams, setFogParams] = useState<{
     color: THREE.ColorRepresentation;
     near: number;
@@ -41,199 +68,68 @@ export default function SimulatedGame({
     far: 50,
   });
   const [skyColor, setSkyColor] = useState<THREE.ColorRepresentation>(0xffffff);
-
-  // New state to track the current atmosphere (corresponding to a folder name)
-  // Possible values: "foggy", "sunny", or "sunset"
   const [currentAtmosphere, setCurrentAtmosphere] = useState<string>("foggy");
 
-  // Refs to hold the latest fog/sky values (to avoid stale closures in animate)
   const fogParamsRef = useRef(fogParams);
   const skyColorRef = useRef(skyColor);
-
   useEffect(() => {
     fogParamsRef.current = fogParams;
   }, [fogParams]);
-
   useEffect(() => {
     skyColorRef.current = skyColor;
   }, [skyColor]);
 
-  // ----- Atmosphere change functions using GSAP -----
+  // GSAP tween references to manage concurrent animations.
+  const fogTweenRef = useRef<gsap.core.Tween | null>(null);
+  const skyTweenRef = useRef<gsap.core.Tween | null>(null);
 
-  // "Foggy": dense fog
-  const changeAtmosphereToFog = () => {
-    const currentFogColor = new THREE.Color(fogParamsRef.current.color);
-    const targetFogColor = new THREE.Color(0x1c1c1c);
-    const fogObject = {
-      r: currentFogColor.r,
-      g: currentFogColor.g,
-      b: currentFogColor.b,
-      near: fogParamsRef.current.near,
-      far: fogParamsRef.current.far,
-    };
-
-    gsap.to(fogObject, {
-      duration: 1,
-      ease: "power1.out",
-      r: targetFogColor.r,
-      g: targetFogColor.g,
-      b: targetFogColor.b,
-      near: 10,
-      far: 50,
-      onUpdate: () => {
-        const newColor = new THREE.Color(fogObject.r, fogObject.g, fogObject.b);
-        setFogParams({
-          color: newColor.getHex(),
-          near: fogObject.near,
-          far: fogObject.far,
-        });
-      },
-    });
-
-    const currentSkyColor = new THREE.Color(skyColorRef.current);
-    const targetSkyColor = new THREE.Color(0xffffff);
-    const skyObject = {
-      r: currentSkyColor.r,
-      g: currentSkyColor.g,
-      b: currentSkyColor.b,
-    };
-
-    gsap.to(skyObject, {
-      duration: 3,
-      ease: "power1.out",
-      r: targetSkyColor.r,
-      g: targetSkyColor.g,
-      b: targetSkyColor.b,
-      onUpdate: () => {
-        const newSky = new THREE.Color(skyObject.r, skyObject.g, skyObject.b);
-        setSkyColor(newSky.getHex());
-      },
-    });
-
-    setCurrentAtmosphere("foggy");
+  // --- Model transform presets ---
+  const modelTransforms: Record<
+    string,
+    { scale: THREE.Vector3; position: THREE.Vector3; rotationY?: number }
+  > = {
+    Asian: {
+      scale: new THREE.Vector3(1.5, 1.5, 1.5),
+      position: new THREE.Vector3(0, 0.1, -15),
+    },
+    Classic: {
+      scale: new THREE.Vector3(0.05, 0.05, 0.05),
+      position: new THREE.Vector3(0, 0, -30),
+      rotationY: Math.PI,
+    },
+    Modern: {
+      scale: new THREE.Vector3(2, 2, 2),
+      position: new THREE.Vector3(315, 0.01, -45),
+    },
   };
 
-  // "Sunny": clear atmosphere—but with fog still visible near the horizon.
-  // Fog parameters adjusted so the effect appears closer.
-  const changeAtmosphereToSunny = () => {
-    const targetFogColor = new THREE.Color(0x87ceeb);
-    const currentFogColor = new THREE.Color(fogParamsRef.current.color);
-    const fogObject = {
-      r: currentFogColor.r,
-      g: currentFogColor.g,
-      b: currentFogColor.b,
-      near: fogParamsRef.current.near,
-      far: fogParamsRef.current.far,
-    };
-
-    // Adjusted to near: 20, far: 150 (instead of 30, 200) to move the fog effect closer.
-    gsap.to(fogObject, {
-      duration: 3,
-      ease: "power1.out",
-      r: targetFogColor.r,
-      g: targetFogColor.g,
-      b: targetFogColor.b,
-      near: 20,
-      far: 150,
-      onUpdate: () => {
-        const newColor = new THREE.Color(fogObject.r, fogObject.g, fogObject.b);
-        setFogParams({
-          color: newColor.getHex(),
-          near: fogObject.near,
-          far: fogObject.far,
-        });
-      },
+  // --- Preload models on mount ---
+  useEffect(() => {
+    const loader = new GLTFLoader();
+    const modelsToLoad = ["Asian", "Classic", "Modern"];
+    modelsToLoad.forEach((modelName) => {
+      let path = "";
+      switch (modelName) {
+        case "Asian":
+          path = "/objects/asian/scene.gltf";
+          break;
+        case "Classic":
+          path = "/objects/small_brick_house/scene.gltf";
+          break;
+        case "Modern":
+          path = "/objects/modern/scene.gltf";
+          break;
+        default:
+          break;
+      }
+      loader.load(path, (gltf) => {
+        modelsRef.current[modelName] = gltf.scene;
+        console.log(`${modelName} model loaded.`);
+      });
     });
+  }, []);
 
-    const targetSkyColor = new THREE.Color(0x87ceeb);
-    const currentSkyColor = new THREE.Color(skyColorRef.current);
-    const skyObject = {
-      r: currentSkyColor.r,
-      g: currentSkyColor.g,
-      b: currentSkyColor.b,
-    };
-
-    gsap.to(skyObject, {
-      duration: 3,
-      ease: "power1.out",
-      r: targetSkyColor.r,
-      g: targetSkyColor.g,
-      b: targetSkyColor.b,
-      onUpdate: () => {
-        const newSky = new THREE.Color(skyObject.r, skyObject.g, skyObject.b);
-        setSkyColor(newSky.getHex());
-      },
-    });
-
-    setCurrentAtmosphere("sunny");
-  };
-
-  // "Sunset": warm tint with moderately transparent fog.
-  // Fog parameters adjusted so the effect appears closer.
-  const changeAtmosphereToSunset = () => {
-    const targetFogColor = new THREE.Color(0xffa500);
-    const currentFogColor = new THREE.Color(fogParamsRef.current.color);
-    const fogObject = {
-      r: currentFogColor.r,
-      g: currentFogColor.g,
-      b: currentFogColor.b,
-      near: fogParamsRef.current.near,
-      far: fogParamsRef.current.far,
-    };
-
-    // Adjusted to near: 15, far: 100 (instead of 20, 150) to move the fog effect closer.
-    gsap.to(fogObject, {
-      duration: 3,
-      ease: "power1.out",
-      r: targetFogColor.r,
-      g: targetFogColor.g,
-      b: targetFogColor.b,
-      near: 15,
-      far: 100,
-      onUpdate: () => {
-        const newColor = new THREE.Color(fogObject.r, fogObject.g, fogObject.b);
-        setFogParams({
-          color: newColor.getHex(),
-          near: fogObject.near,
-          far: fogObject.far,
-        });
-      },
-    });
-
-    const targetSkyColor = new THREE.Color(0xffa500);
-    const currentSkyColor = new THREE.Color(skyColorRef.current);
-    const skyObject = {
-      r: currentSkyColor.r,
-      g: currentSkyColor.g,
-      b: currentSkyColor.b,
-    };
-
-    gsap.to(skyObject, {
-      duration: 3,
-      ease: "power1.out",
-      r: targetSkyColor.r,
-      g: targetSkyColor.g,
-      b: targetSkyColor.b,
-      onUpdate: () => {
-        const newSky = new THREE.Color(skyObject.r, skyObject.g, skyObject.b);
-        setSkyColor(newSky.getHex());
-      },
-    });
-
-    setCurrentAtmosphere("sunset");
-  };
-
-  // ----- Reset function to restore initial fog/sky values when going back -----
-  const handleGoBack = () => {
-    // Reset to initial fog and sky colors and atmosphere.
-    setFogParams({ color: 0x1c1c1c, near: 10, far: 50 });
-    setSkyColor(0xffffff);
-    setCurrentAtmosphere("foggy");
-    // Call the provided callback to go back to model selection.
-    ChangeState();
-  };
-
-  // ----- Scene setup and animation loop -----
+  // --- Scene setup and animation loop ---
   useEffect(() => {
     if (!mountRef.current) return;
     const scene = new THREE.Scene();
@@ -255,10 +151,10 @@ export default function SimulatedGame({
 
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    // We do not set scene.background so that our custom skybox mesh shows.
     renderer.setClearColor(scene.fog.color);
     mountRef.current.appendChild(renderer.domElement);
 
+    // Ground plane, grid, and lighting.
     const plane = new THREE.Mesh(
       new THREE.PlaneGeometry(450, 450, 10, 10),
       new THREE.MeshStandardMaterial({ color: 0x808080, fog: true })
@@ -285,75 +181,6 @@ export default function SimulatedGame({
     controlsRef.current = controls;
     mountRef.current.addEventListener("click", () => controls.lock());
 
-    const loader = new GLTFLoader();
-    switch (modelToRender) {
-      case "Asian":
-        loader.load("/objects/asian/scene.gltf", (gltf) => {
-          gltf.scene.scale.set(1.5, 1.5, 1.5);
-          gltf.scene.position.set(0, 0.1, -15);
-          scene.add(gltf.scene);
-        });
-        break;
-      case "Classic":
-        loader.load("/objects/small_brick_house/scene.gltf", (gltf) => {
-          gltf.scene.scale.set(0.05, 0.05, 0.05);
-          gltf.scene.position.set(0, 0, -30);
-          gltf.scene.rotation.y = Math.PI;
-          scene.add(gltf.scene);
-        });
-        break;
-      case "Modern":
-        loader.load("/objects/modern/scene.gltf", (gltf) => {
-          gltf.scene.scale.set(2, 2, 2);
-          gltf.scene.position.set(315, 0.01, -45);
-          scene.add(gltf.scene);
-        });
-        break;
-      default:
-        console.log(modelToRender);
-        console.log("No model was found");
-    }
-
-    let moveForward = false,
-      moveBackward = false,
-      moveLeft = false,
-      moveRight = false;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      switch (event.code) {
-        case "KeyW":
-          moveForward = true;
-          break;
-        case "KeyS":
-          moveBackward = true;
-          break;
-        case "KeyA":
-          moveLeft = true;
-          break;
-        case "KeyD":
-          moveRight = true;
-          break;
-      }
-    };
-    const handleKeyUp = (event: KeyboardEvent) => {
-      switch (event.code) {
-        case "KeyW":
-          moveForward = false;
-          break;
-        case "KeyS":
-          moveBackward = false;
-          break;
-        case "KeyA":
-          moveLeft = false;
-          break;
-        case "KeyD":
-          moveRight = false;
-          break;
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("keyup", handleKeyUp);
-
     const animate = () => {
       requestAnimationFrame(animate);
       if (scene.fog) {
@@ -370,7 +197,6 @@ export default function SimulatedGame({
       ambientLightRef.current?.color.setHex(
         typeof skyColorRef.current === "number" ? skyColorRef.current : 0xffffff
       );
-      // Update the skybox shader uniform (if exists) with the current fog color.
       if (
         skyboxRef.current &&
         skyboxRef.current.material &&
@@ -379,10 +205,6 @@ export default function SimulatedGame({
         (skyboxRef.current.material as any).uniforms.fogColor.value =
           new THREE.Color(fogParamsRef.current.color);
       }
-      if (moveForward) controls.moveForward(0.1);
-      if (moveBackward) controls.moveForward(-0.1);
-      if (moveLeft) controls.moveRight(-0.1);
-      if (moveRight) controls.moveRight(0.1);
       renderer.render(scene, camera);
     };
     animate();
@@ -390,79 +212,266 @@ export default function SimulatedGame({
     return () => {
       mountRef.current?.removeChild(renderer.domElement);
       renderer.dispose();
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [modelToRender]);
+  }, []);
 
-  // ----- Create/update the skybox mesh when currentAtmosphere changes -----
+  // --- Update model when modelToRender changes ---
   useEffect(() => {
     if (!sceneRef.current) return;
-    const loader = new THREE.CubeTextureLoader();
-    const basePath = `/cubeMapTextures/${currentAtmosphere}/`;
-    loader.load(
-      [
-        `${basePath}px.jpg`,
-        `${basePath}nx.jpg`,
-        `${basePath}py.jpg`,
-        `${basePath}ny.jpg`,
-        `${basePath}pz.jpg`,
-        `${basePath}nz.jpg`,
-      ],
-      (cubeTexture) => {
-        // Define custom shaders for a skybox with a gradient effect:
-        // The fragment shader blends the cube texture with the fog color based on the Y component.
-        const vertexShader = `
-          varying vec3 vWorldDirection;
-          void main() {
-            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-            vWorldDirection = normalize(worldPosition.xyz - cameraPosition);
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `;
-        const fragmentShader = `
-          uniform samplerCube envMap;
-          uniform vec3 fogColor;
-          varying vec3 vWorldDirection;
-          void main() {
-            vec3 direction = normalize(vWorldDirection);
-            vec4 envColor = textureCube(envMap, direction);
-            // Compute a blend factor: near horizon (low direction.y) blends with fogColor,
-            // at high Y, show full texture.
-            float blendFactor = smoothstep(0.0, 0.3, direction.y);
-            vec3 finalColor = mix(fogColor, envColor.rgb, blendFactor);
-            gl_FragColor = vec4(finalColor, 1.0);
-          }
-        `;
-        // Remove previous skybox if it exists.
-        if (skyboxRef.current && sceneRef.current) {
-          if (Array.isArray(skyboxRef.current.material)) {
-            skyboxRef.current.material.forEach((mat) => {
-              if (mat && "dispose" in mat) mat.dispose();
-            });
-          } else if (skyboxRef.current.material) {
-            skyboxRef.current.material.dispose();
-          }
-          skyboxRef.current.geometry.dispose();
-          sceneRef.current.remove(skyboxRef.current);
+    // Remove the current model if present.
+    if (currentModelRef.current) {
+      sceneRef.current.remove(currentModelRef.current);
+      currentModelRef.current = null;
+    }
+    // Retrieve the preloaded model.
+    const loadedModel = modelsRef.current[modelToRender];
+    if (loadedModel) {
+      const modelClone = loadedModel.clone();
+      const transform = modelTransforms[modelToRender];
+      if (transform) {
+        modelClone.scale.copy(transform.scale);
+        modelClone.position.copy(transform.position);
+        if (transform.rotationY) {
+          modelClone.rotation.y = transform.rotationY;
         }
-        const skyGeo = new THREE.BoxGeometry(1000, 1000, 1000);
-        const skyMat = new THREE.ShaderMaterial({
-          vertexShader,
-          fragmentShader,
-          uniforms: {
-            envMap: { value: cubeTexture },
-            fogColor: { value: new THREE.Color(fogParamsRef.current.color) },
-          },
-          side: THREE.BackSide,
-          fog: false, // we're handling fog in the shader manually
-        });
-        const skyMesh = new THREE.Mesh(skyGeo, skyMat);
-        skyboxRef.current = skyMesh;
-        sceneRef.current?.add(skyMesh);
       }
-    );
+      sceneRef.current.add(modelClone);
+      currentModelRef.current = modelClone;
+    } else {
+      console.warn(`Model ${modelToRender} not loaded yet.`);
+    }
+  }, [modelToRender]);
+
+  // --- Atmosphere (fog/sky) change functions with tween cancellation ---
+  const changeAtmosphereToFog = () => {
+    // Kill any existing tweens.
+    if (fogTweenRef.current) fogTweenRef.current.kill();
+    if (skyTweenRef.current) skyTweenRef.current.kill();
+
+    const currentFogColor = new THREE.Color(fogParamsRef.current.color);
+    const targetFogColor = new THREE.Color(0x1c1c1c);
+    const fogObject = {
+      r: currentFogColor.r,
+      g: currentFogColor.g,
+      b: currentFogColor.b,
+      near: fogParamsRef.current.near,
+      far: fogParamsRef.current.far,
+    };
+
+    fogTweenRef.current = gsap.to(fogObject, {
+      duration: 1,
+      ease: "power1.out",
+      r: targetFogColor.r,
+      g: targetFogColor.g,
+      b: targetFogColor.b,
+      near: 10,
+      far: 50,
+      onUpdate: () => {
+        const newColor = new THREE.Color(fogObject.r, fogObject.g, fogObject.b);
+        setFogParams({
+          color: newColor.getHex(),
+          near: fogObject.near,
+          far: fogObject.far,
+        });
+      },
+    });
+
+    const currentSkyColor = new THREE.Color(skyColorRef.current);
+    const targetSkyColor = new THREE.Color(0xffffff);
+    const skyObject = {
+      r: currentSkyColor.r,
+      g: currentSkyColor.g,
+      b: currentSkyColor.b,
+    };
+
+    skyTweenRef.current = gsap.to(skyObject, {
+      duration: 3,
+      ease: "power1.out",
+      r: targetSkyColor.r,
+      g: targetSkyColor.g,
+      b: targetSkyColor.b,
+      onUpdate: () => {
+        const newSky = new THREE.Color(skyObject.r, skyObject.g, skyObject.b);
+        setSkyColor(newSky.getHex());
+      },
+    });
+
+    setCurrentAtmosphere("foggy");
+  };
+
+  const changeAtmosphereToSunny = () => {
+    if (fogTweenRef.current) fogTweenRef.current.kill();
+    if (skyTweenRef.current) skyTweenRef.current.kill();
+
+    const targetFogColor = new THREE.Color(0x87ceeb);
+    const currentFogColor = new THREE.Color(fogParamsRef.current.color);
+    const fogObject = {
+      r: currentFogColor.r,
+      g: currentFogColor.g,
+      b: currentFogColor.b,
+      near: fogParamsRef.current.near,
+      far: fogParamsRef.current.far,
+    };
+
+    fogTweenRef.current = gsap.to(fogObject, {
+      duration: 3,
+      ease: "power1.out",
+      r: targetFogColor.r,
+      g: targetFogColor.g,
+      b: targetFogColor.b,
+      near: 20,
+      far: 150,
+      onUpdate: () => {
+        const newColor = new THREE.Color(fogObject.r, fogObject.g, fogObject.b);
+        setFogParams({
+          color: newColor.getHex(),
+          near: fogObject.near,
+          far: fogObject.far,
+        });
+      },
+    });
+
+    const targetSkyColor = new THREE.Color(0x87ceeb);
+    const currentSkyColor = new THREE.Color(skyColorRef.current);
+    const skyObject = {
+      r: currentSkyColor.r,
+      g: currentSkyColor.g,
+      b: currentSkyColor.b,
+    };
+
+    skyTweenRef.current = gsap.to(skyObject, {
+      duration: 3,
+      ease: "power1.out",
+      r: targetSkyColor.r,
+      g: targetSkyColor.g,
+      b: targetSkyColor.b,
+      onUpdate: () => {
+        const newSky = new THREE.Color(skyObject.r, skyObject.g, skyObject.b);
+        setSkyColor(newSky.getHex());
+      },
+    });
+
+    setCurrentAtmosphere("sunny");
+  };
+
+  const changeAtmosphereToSunset = () => {
+    if (fogTweenRef.current) fogTweenRef.current.kill();
+    if (skyTweenRef.current) skyTweenRef.current.kill();
+
+    const targetFogColor = new THREE.Color(0xffa500);
+    const currentFogColor = new THREE.Color(fogParamsRef.current.color);
+    const fogObject = {
+      r: currentFogColor.r,
+      g: currentFogColor.g,
+      b: currentFogColor.b,
+      near: fogParamsRef.current.near,
+      far: fogParamsRef.current.far,
+    };
+
+    fogTweenRef.current = gsap.to(fogObject, {
+      duration: 3,
+      ease: "power1.out",
+      r: targetFogColor.r,
+      g: targetFogColor.g,
+      b: targetFogColor.b,
+      near: 15,
+      far: 100,
+      onUpdate: () => {
+        const newColor = new THREE.Color(fogObject.r, fogObject.g, fogObject.b);
+        setFogParams({
+          color: newColor.getHex(),
+          near: fogObject.near,
+          far: fogObject.far,
+        });
+      },
+    });
+
+    const targetSkyColor = new THREE.Color(0xffa500);
+    const currentSkyColor = new THREE.Color(skyColorRef.current);
+    const skyObject = {
+      r: currentSkyColor.r,
+      g: currentSkyColor.g,
+      b: currentSkyColor.b,
+    };
+
+    skyTweenRef.current = gsap.to(skyObject, {
+      duration: 3,
+      ease: "power1.out",
+      r: targetSkyColor.r,
+      g: targetSkyColor.g,
+      b: targetSkyColor.b,
+      onUpdate: () => {
+        const newSky = new THREE.Color(skyObject.r, skyObject.g, skyObject.b);
+        setSkyColor(newSky.getHex());
+      },
+    });
+
+    setCurrentAtmosphere("sunset");
+  };
+
+  // --- Update skybox when currentAtmosphere changes ---
+  useEffect(() => {
+    if (!sceneRef.current) return;
+    // Use the preloaded cube texture if available.
+    const cubeTexture = skyboxTexturesRef.current[currentAtmosphere];
+    if (!cubeTexture) return; // Texture might not have loaded yet.
+
+    // Remove previous skybox if present.
+    if (skyboxRef.current && sceneRef.current) {
+      if (Array.isArray(skyboxRef.current.material)) {
+        skyboxRef.current.material.forEach((mat) => {
+          if (mat && "dispose" in mat) mat.dispose();
+        });
+      } else if (skyboxRef.current.material) {
+        skyboxRef.current.material.dispose();
+      }
+      skyboxRef.current.geometry.dispose();
+      sceneRef.current.remove(skyboxRef.current);
+    }
+
+    const vertexShader = `
+      varying vec3 vWorldDirection;
+      void main() {
+        vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+        vWorldDirection = normalize(worldPosition.xyz - cameraPosition);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `;
+    const fragmentShader = `
+      uniform samplerCube envMap;
+      uniform vec3 fogColor;
+      varying vec3 vWorldDirection;
+      void main() {
+        vec3 direction = normalize(vWorldDirection);
+        vec4 envColor = textureCube(envMap, direction);
+        float blendFactor = smoothstep(0.0, 0.3, direction.y);
+        vec3 finalColor = mix(fogColor, envColor.rgb, blendFactor);
+        gl_FragColor = vec4(finalColor, 1.0);
+      }
+    `;
+
+    const skyGeo = new THREE.BoxGeometry(1000, 1000, 1000);
+    const skyMat = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms: {
+        envMap: { value: cubeTexture },
+        fogColor: { value: new THREE.Color(fogParamsRef.current.color) },
+      },
+      side: THREE.BackSide,
+      fog: false,
+    });
+    const skyMesh = new THREE.Mesh(skyGeo, skyMat);
+    skyboxRef.current = skyMesh;
+    sceneRef.current.add(skyMesh);
   }, [currentAtmosphere]);
+
+  const handleGoBack = () => {
+    setFogParams({ color: 0x1c1c1c, near: 10, far: 50 });
+    setSkyColor(0xffffff);
+    setCurrentAtmosphere("foggy");
+    ChangeState();
+  };
 
   return (
     <div
