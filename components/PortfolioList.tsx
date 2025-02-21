@@ -28,7 +28,7 @@ export default function PortfolioList({
         className={`w-full h-full flex justify-center mt-16 ${visibility}`}
         id="catalogue"
       >
-        <ul className="w-[960px] h-auto space-y-12">
+        <ul className="w-full md:w-[960px] h-auto space-y-12 px-4">
           {/* Mapping Buildings */}
           {buildingModelNames.map((model, k) => (
             <li
@@ -36,18 +36,18 @@ export default function PortfolioList({
               key={k}
             >
               {/* Background of the image */}
-              <div className="bg-yellow-300 rotate-6 w-[400px] h-[400px] relative -z-50">
+              <div className="bg-yellow-300 rotate-6 w-[300px] h-[300px] md:w-[400px] md:h-[400px] relative -z-50">
                 {/* Image placeholder */}
                 <Image
                   alt={`${model.name} building`}
                   src={`/images/CatalogImages/${model.name}.png`}
                   width={400}
                   height={400}
-                  className=" object-fill w-[400px] h-[400px] -rotate-6"
+                  className="object-fill w-[300px] h-[300px] md:w-[400px] md:h-[400px] -rotate-6"
                 />
               </div>
-              <div className="w-[400px] h-full space-y-4 mt-12 lg:mt-0">
-                <h1 className="text-4xl font-bold text-yellow-300">
+              <div className="w-[300px] md:w-[400px] h-full space-y-4 mt-12 lg:mt-0">
+                <h1 className="text-2xl md:text-4xl font-bold text-yellow-300">
                   {model.name}
                 </h1>
                 <p>{model.description}</p>

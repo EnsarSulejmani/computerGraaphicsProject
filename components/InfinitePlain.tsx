@@ -54,8 +54,9 @@ export default function InfinitePlain({
     camera.position.set(0, movementRef.current, 10);
     camera.rotateX(rotationRef.current);
 
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setClearColor(scene.fog.color);
     mountRef.current.appendChild(renderer.domElement);
 
@@ -102,8 +103,8 @@ export default function InfinitePlain({
     window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
       mountRef.current?.removeChild(renderer.domElement);
+      window.removeEventListener("resize", handleResize);
       renderer.dispose();
     };
   }, []);
@@ -113,11 +114,11 @@ export default function InfinitePlain({
       ref={mountRef}
       className={`w-full h-full overflow-x-hidden relative ${visibility}`}
     >
-      <div className="absolute w-full h-full flex flex-col justify-center items-center">
-        <h1 className="text-[10em] drop-shadow-md text-yellow-300 font-bold">
+      <div className="absolute w-full h-full flex flex-col justify-center items-center px-4 text-center">
+        <h1 className="text-5xl md:text-[10em] drop-shadow-md text-yellow-300 font-bold">
           SwanSpace
         </h1>
-        <p className="text-2xl max-w-[960px] text-center mb-5 font-thin">
+        <p className="text-lg md:text-2xl max-w-[960px] text-center mb-5 font-thin">
           Welcome to the interactive portfolio of SwanSpace Architecture.
           <br />
           Disclaimer! This is a computer science course project, and not a real

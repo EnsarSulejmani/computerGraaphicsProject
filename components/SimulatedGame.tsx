@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { IoPartlySunnySharp } from "react-icons/io5";
 import { IoIosSunny } from "react-icons/io";
@@ -15,18 +16,18 @@ type Props = {
   visibility: string;
   modelToRender: string;
   ChangeState: () => void;
-  setModelsLoaded: (loaded: boolean) => void; // Add this prop to pass the state setter
+  setModelsLoaded: (loaded: boolean) => void;
 };
 
 export default function SimulatedGame({
   visibility,
   modelToRender,
   ChangeState,
-  setModelsLoaded, // Add this prop to pass the state setter
+  setModelsLoaded,
 }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const controlsRef = useRef<PointerLockControls | null>(null);
+  const controlsRef = useRef<PointerLockControls | OrbitControls | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const ambientLightRef = useRef<THREE.AmbientLight | null>(null);
   const skyboxRef = useRef<THREE.Mesh | null>(null);
@@ -183,6 +184,11 @@ export default function SimulatedGame({
     KeyD: false,
   });
 
+  // Function to detect if the device is mobile
+  const isMobile = () => {
+    return /Mobi|Android/i.test(navigator.userAgent);
+  };
+
   // --- Scene setup and animation loop ---
   useEffect(() => {
     if (!mountRef.current) return;
@@ -200,11 +206,12 @@ export default function SimulatedGame({
       0.1,
       1000
     );
-    camera.position.set(0, 1.6, 0);
+    camera.position.set(0, 1.6, 10); // Set the initial position of the camera to be 10 units in front of the object
     cameraRef.current = camera;
 
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setClearColor(scene.fog.color);
     mountRef.current.appendChild(renderer.domElement);
 
@@ -231,13 +238,30 @@ export default function SimulatedGame({
     directionalLight.position.set(10, 20, 0);
     scene.add(directionalLight);
 
-    // Set up PointerLockControls.
-    const controls = new PointerLockControls(camera, document.body);
+    let controls: PointerLockControls | OrbitControls;
+    if (isMobile()) {
+      // Use OrbitControls for mobile
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.25;
+      controls.enableZoom = true; // Enable zoom
+      controls.minDistance = 5; // Minimum zoom distance
+      controls.maxDistance = 50; // Maximum zoom distance
+      controls.target.set(0, 1.6, -10); // Set the target to be 10 units in front of the camera
+      controls.update();
+    } else {
+      // Use PointerLockControls for desktop
+      controls = new PointerLockControls(camera, document.body);
+      const onClick = () => {
+        if (controls instanceof PointerLockControls) {
+          controls.lock();
+        }
+      };
+      mountRef.current.addEventListener("click", onClick);
+    }
     controlsRef.current = controls;
-    const onClick = () => controls.lock();
-    mountRef.current.addEventListener("click", onClick);
 
-    // Keyboard event handlers.
+    // Keyboard event handlers for desktop
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code in keysPressed.current) {
         keysPressed.current[e.code] = true;
@@ -248,8 +272,10 @@ export default function SimulatedGame({
         keysPressed.current[e.code] = false;
       }
     };
-    document.addEventListener("keydown", onKeyDown);
-    document.addEventListener("keyup", onKeyUp);
+    if (!isMobile()) {
+      document.addEventListener("keydown", onKeyDown);
+      document.addEventListener("keyup", onKeyUp);
+    }
 
     const clock = new THREE.Clock();
     const animate = () => {
@@ -258,18 +284,18 @@ export default function SimulatedGame({
       const moveSpeed = 5; // units per second
 
       // Update camera movement using WASD if pointer lock is enabled.
-      if (controls.isLocked === true) {
+      if (!isMobile() && (controls as PointerLockControls).isLocked === true) {
         if (keysPressed.current["KeyW"]) {
-          controls.moveForward(moveSpeed * delta);
+          (controls as PointerLockControls).moveForward(moveSpeed * delta);
         }
         if (keysPressed.current["KeyS"]) {
-          controls.moveForward(-moveSpeed * delta);
+          (controls as PointerLockControls).moveForward(-moveSpeed * delta);
         }
         if (keysPressed.current["KeyA"]) {
-          controls.moveRight(-moveSpeed * delta);
+          (controls as PointerLockControls).moveRight(-moveSpeed * delta);
         }
         if (keysPressed.current["KeyD"]) {
-          controls.moveRight(moveSpeed * delta);
+          (controls as PointerLockControls).moveRight(moveSpeed * delta);
         }
       }
 
@@ -312,7 +338,6 @@ export default function SimulatedGame({
       window.removeEventListener("resize", handleResize);
       document.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("keyup", onKeyUp);
-      mountRef.current?.removeEventListener("click", onClick);
       renderer.dispose();
     };
   }, []);
