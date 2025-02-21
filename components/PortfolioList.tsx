@@ -44,7 +44,7 @@ export default function PortfolioList({
                   width={400}
                   height={400}
                   className=" object-fill w-[400px] h-[400px] -rotate-6"
-                ></Image>
+                />
               </div>
               <div className="w-[400px] h-full space-y-4 mt-12 lg:mt-0">
                 <h1 className="text-4xl font-bold text-yellow-300">

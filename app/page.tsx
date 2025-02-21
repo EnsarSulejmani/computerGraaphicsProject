@@ -15,10 +15,11 @@ export default function Home() {
   const [HasBuilding, setHasBuilding] = useState(false); // Track building selection
   const [BuildingModelName, setBuildingModelName] = useState(""); // Store selected building name
   const [planeAnimationVariables, setplaneAnimationVariables] = useState({
-    SpeedPlane: 0.1, // Speed for plane movement
+    SpeedPlane: 5, // Speed for plane movement
     CameraRotationState: 0, // Initial rotation state
     CameraMovement: 5, // Initial camera movement
   });
+  const [modelsLoaded, setModelsLoaded] = useState(false); // Add this state
 
   const ChangeState = () => {
     if (IsLoading) return; // Prevent simultaneous transitions
@@ -80,7 +81,7 @@ export default function Home() {
             onComplete: () => {
               setplaneAnimationVariables((prev) => ({
                 ...prev,
-                SpeedPlane: 0.1, // Reset plane speed
+                SpeedPlane: 5, // Reset plane speed
                 CameraRotationState: 0, // Reset camera rotation
                 CameraMovement: 5, // Reset camera movement
               }));
@@ -143,6 +144,7 @@ export default function Home() {
           hasBuildingSelected={HasBuilding}
           ChangeState={ChangeState}
           animationVariables={planeAnimationVariables}
+          modelsLoaded={modelsLoaded} // Pass the modelsLoaded state
         />
         <PortfolioList
           visibility={Show}
@@ -155,6 +157,7 @@ export default function Home() {
           visibility={Hide}
           modelToRender={BuildingModelName}
           ChangeState={ChangeState}
+          setModelsLoaded={setModelsLoaded} // Pass the state setter
         />
       </div>
     </div>

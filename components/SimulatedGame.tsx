@@ -8,16 +8,21 @@ import { MdSunnySnowing } from "react-icons/md";
 import { RiArrowGoBackFill } from "react-icons/ri";
 import { gsap } from "gsap";
 
+// A module-level cache to store preloaded models so they load only once.
+let preloadedModelsCache: { [key: string]: THREE.Object3D } | null = null;
+
 type Props = {
   visibility: string;
   modelToRender: string;
   ChangeState: () => void;
+  setModelsLoaded: (loaded: boolean) => void; // Add this prop to pass the state setter
 };
 
 export default function SimulatedGame({
   visibility,
   modelToRender,
   ChangeState,
+  setModelsLoaded, // Add this prop to pass the state setter
 }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -26,15 +31,78 @@ export default function SimulatedGame({
   const ambientLightRef = useRef<THREE.AmbientLight | null>(null);
   const skyboxRef = useRef<THREE.Mesh | null>(null);
 
-  // --- Preload models ---
+  // Preloaded models reference.
   const modelsRef = useRef<{ [key: string]: THREE.Object3D }>({});
   const currentModelRef = useRef<THREE.Object3D | null>(null);
 
-  // --- Preload skybox textures ---
-  // This will store CubeTextures for each atmosphere: "foggy", "sunny", "sunset"
-  const skyboxTexturesRef = useRef<{ [key: string]: THREE.CubeTexture }>({});
+  const modelPaths: { [key: string]: string } = {
+    Asian: "/objects/asian/scene.gltf",
+    Classic: "/objects/small_brick_house/scene.gltf",
+    Modern: "/objects/modern/scene.gltf",
+  };
 
-  // Preload skybox textures on mount.
+  const loadModelsAsync = async () => {
+    if (preloadedModelsCache) {
+      return preloadedModelsCache;
+    }
+
+    const loader = new GLTFLoader();
+    const modelsToLoad = Object.keys(modelPaths);
+
+    const loadModel = (modelName: string, path: string) =>
+      new Promise<THREE.Object3D>((resolve, reject) => {
+        loader.load(
+          path,
+          (gltf) => {
+            resolve(gltf.scene);
+          },
+          undefined,
+          (error) => {
+            console.error(`Error loading ${modelName} model:`, error);
+            reject(error);
+          }
+        );
+      });
+
+    const newModels: { [key: string]: THREE.Object3D } = {};
+    await Promise.all(
+      modelsToLoad.map((modelName) =>
+        loadModel(modelName, modelPaths[modelName]).then((model) => {
+          newModels[modelName] = model;
+          console.log(`${modelName} model preloaded.`);
+        })
+      )
+    );
+
+    preloadedModelsCache = newModels;
+    return newModels;
+  };
+
+  // --- Preload models asynchronously on first mount ---
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadModels = async () => {
+      try {
+        const models = await loadModelsAsync();
+        if (isMounted) {
+          modelsRef.current = models;
+          setModelsLoaded(true); // Set modelsLoaded state
+        }
+      } catch (error) {
+        console.error("Error preloading models", error);
+      }
+    };
+
+    loadModels();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [setModelsLoaded]);
+
+  // --- Preload skybox textures ---
+  const skyboxTexturesRef = useRef<{ [key: string]: THREE.CubeTexture }>({});
   useEffect(() => {
     const loader = new THREE.CubeTextureLoader();
     const atmospheres = ["foggy", "sunny", "sunset"];
@@ -52,6 +120,10 @@ export default function SimulatedGame({
         (cubeTexture) => {
           skyboxTexturesRef.current[atmo] = cubeTexture;
           console.log(`${atmo} skybox texture loaded.`);
+        },
+        undefined,
+        (error) => {
+          console.error(`Error loading ${atmo} skybox texture:`, error);
         }
       );
     });
@@ -79,7 +151,7 @@ export default function SimulatedGame({
     skyColorRef.current = skyColor;
   }, [skyColor]);
 
-  // GSAP tween references to manage concurrent animations.
+  // GSAP tween references.
   const fogTweenRef = useRef<gsap.core.Tween | null>(null);
   const skyTweenRef = useRef<gsap.core.Tween | null>(null);
 
@@ -103,31 +175,13 @@ export default function SimulatedGame({
     },
   };
 
-  // --- Preload models on mount ---
-  useEffect(() => {
-    const loader = new GLTFLoader();
-    const modelsToLoad = ["Asian", "Classic", "Modern"];
-    modelsToLoad.forEach((modelName) => {
-      let path = "";
-      switch (modelName) {
-        case "Asian":
-          path = "/objects/asian/scene.gltf";
-          break;
-        case "Classic":
-          path = "/objects/small_brick_house/scene.gltf";
-          break;
-        case "Modern":
-          path = "/objects/modern/scene.gltf";
-          break;
-        default:
-          break;
-      }
-      loader.load(path, (gltf) => {
-        modelsRef.current[modelName] = gltf.scene;
-        console.log(`${modelName} model loaded.`);
-      });
-    });
-  }, []);
+  // --- Declare WASD key state at the top level ---
+  const keysPressed = useRef<{ [key: string]: boolean }>({
+    KeyW: false,
+    KeyA: false,
+    KeyS: false,
+    KeyD: false,
+  });
 
   // --- Scene setup and animation loop ---
   useEffect(() => {
@@ -177,12 +231,49 @@ export default function SimulatedGame({
     directionalLight.position.set(10, 20, 0);
     scene.add(directionalLight);
 
+    // Set up PointerLockControls.
     const controls = new PointerLockControls(camera, document.body);
     controlsRef.current = controls;
-    mountRef.current.addEventListener("click", () => controls.lock());
+    const onClick = () => controls.lock();
+    mountRef.current.addEventListener("click", onClick);
 
+    // Keyboard event handlers.
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code in keysPressed.current) {
+        keysPressed.current[e.code] = true;
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code in keysPressed.current) {
+        keysPressed.current[e.code] = false;
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("keyup", onKeyUp);
+
+    const clock = new THREE.Clock();
     const animate = () => {
       requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      const moveSpeed = 5; // units per second
+
+      // Update camera movement using WASD if pointer lock is enabled.
+      if (controls.isLocked === true) {
+        if (keysPressed.current["KeyW"]) {
+          controls.moveForward(moveSpeed * delta);
+        }
+        if (keysPressed.current["KeyS"]) {
+          controls.moveForward(-moveSpeed * delta);
+        }
+        if (keysPressed.current["KeyA"]) {
+          controls.moveRight(-moveSpeed * delta);
+        }
+        if (keysPressed.current["KeyD"]) {
+          controls.moveRight(moveSpeed * delta);
+        }
+      }
+
+      // Update fog and ambient light.
       if (scene.fog) {
         scene.fog.color.setHex(
           typeof fogParamsRef.current.color === "number"
@@ -209,8 +300,19 @@ export default function SimulatedGame({
     };
     animate();
 
+    const handleResize = () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    };
+    window.addEventListener("resize", handleResize);
+
     return () => {
       mountRef.current?.removeChild(renderer.domElement);
+      window.removeEventListener("resize", handleResize);
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("keyup", onKeyUp);
+      mountRef.current?.removeEventListener("click", onClick);
       renderer.dispose();
     };
   }, []);
@@ -218,12 +320,24 @@ export default function SimulatedGame({
   // --- Update model when modelToRender changes ---
   useEffect(() => {
     if (!sceneRef.current) return;
-    // Remove the current model if present.
     if (currentModelRef.current) {
+      // Dispose geometries and materials before removal.
+      currentModelRef.current.traverse((child) => {
+        if ((child as THREE.Mesh).geometry) {
+          (child as THREE.Mesh).geometry.dispose();
+        }
+        if ((child as THREE.Mesh).material) {
+          const material = (child as THREE.Mesh).material;
+          if (Array.isArray(material)) {
+            material.forEach((mat) => mat.dispose());
+          } else {
+            material.dispose();
+          }
+        }
+      });
       sceneRef.current.remove(currentModelRef.current);
       currentModelRef.current = null;
     }
-    // Retrieve the preloaded model.
     const loadedModel = modelsRef.current[modelToRender];
     if (loadedModel) {
       const modelClone = loadedModel.clone();
@@ -242,14 +356,19 @@ export default function SimulatedGame({
     }
   }, [modelToRender]);
 
-  // --- Atmosphere (fog/sky) change functions with tween cancellation ---
-  const changeAtmosphereToFog = () => {
-    // Kill any existing tweens.
+  // --- Reusable atmosphere change function ---
+  const changeAtmosphere = (
+    targetFogColorHex: number,
+    targetSkyColorHex: number,
+    fogNear: number,
+    fogFar: number,
+    atmosphere: string
+  ) => {
     if (fogTweenRef.current) fogTweenRef.current.kill();
     if (skyTweenRef.current) skyTweenRef.current.kill();
 
     const currentFogColor = new THREE.Color(fogParamsRef.current.color);
-    const targetFogColor = new THREE.Color(0x1c1c1c);
+    const targetFogColor = new THREE.Color(targetFogColorHex);
     const fogObject = {
       r: currentFogColor.r,
       g: currentFogColor.g,
@@ -264,8 +383,8 @@ export default function SimulatedGame({
       r: targetFogColor.r,
       g: targetFogColor.g,
       b: targetFogColor.b,
-      near: 10,
-      far: 50,
+      near: fogNear,
+      far: fogFar,
       onUpdate: () => {
         const newColor = new THREE.Color(fogObject.r, fogObject.g, fogObject.b);
         setFogParams({
@@ -277,7 +396,7 @@ export default function SimulatedGame({
     });
 
     const currentSkyColor = new THREE.Color(skyColorRef.current);
-    const targetSkyColor = new THREE.Color(0xffffff);
+    const targetSkyColor = new THREE.Color(targetSkyColorHex);
     const skyObject = {
       r: currentSkyColor.r,
       g: currentSkyColor.g,
@@ -285,7 +404,7 @@ export default function SimulatedGame({
     };
 
     skyTweenRef.current = gsap.to(skyObject, {
-      duration: 3,
+      duration: 1,
       ease: "power1.out",
       r: targetSkyColor.r,
       g: targetSkyColor.g,
@@ -296,127 +415,27 @@ export default function SimulatedGame({
       },
     });
 
-    setCurrentAtmosphere("foggy");
+    setCurrentAtmosphere(atmosphere);
+  };
+
+  const changeAtmosphereToFog = () => {
+    changeAtmosphere(0x1c1c1c, 0xffffff, 10, 50, "foggy");
   };
 
   const changeAtmosphereToSunny = () => {
-    if (fogTweenRef.current) fogTweenRef.current.kill();
-    if (skyTweenRef.current) skyTweenRef.current.kill();
-
-    const targetFogColor = new THREE.Color(0x87ceeb);
-    const currentFogColor = new THREE.Color(fogParamsRef.current.color);
-    const fogObject = {
-      r: currentFogColor.r,
-      g: currentFogColor.g,
-      b: currentFogColor.b,
-      near: fogParamsRef.current.near,
-      far: fogParamsRef.current.far,
-    };
-
-    fogTweenRef.current = gsap.to(fogObject, {
-      duration: 3,
-      ease: "power1.out",
-      r: targetFogColor.r,
-      g: targetFogColor.g,
-      b: targetFogColor.b,
-      near: 20,
-      far: 150,
-      onUpdate: () => {
-        const newColor = new THREE.Color(fogObject.r, fogObject.g, fogObject.b);
-        setFogParams({
-          color: newColor.getHex(),
-          near: fogObject.near,
-          far: fogObject.far,
-        });
-      },
-    });
-
-    const targetSkyColor = new THREE.Color(0x87ceeb);
-    const currentSkyColor = new THREE.Color(skyColorRef.current);
-    const skyObject = {
-      r: currentSkyColor.r,
-      g: currentSkyColor.g,
-      b: currentSkyColor.b,
-    };
-
-    skyTweenRef.current = gsap.to(skyObject, {
-      duration: 3,
-      ease: "power1.out",
-      r: targetSkyColor.r,
-      g: targetSkyColor.g,
-      b: targetSkyColor.b,
-      onUpdate: () => {
-        const newSky = new THREE.Color(skyObject.r, skyObject.g, skyObject.b);
-        setSkyColor(newSky.getHex());
-      },
-    });
-
-    setCurrentAtmosphere("sunny");
+    changeAtmosphere(0x87ceeb, 0x87ceeb, 20, 150, "sunny");
   };
 
   const changeAtmosphereToSunset = () => {
-    if (fogTweenRef.current) fogTweenRef.current.kill();
-    if (skyTweenRef.current) skyTweenRef.current.kill();
-
-    const targetFogColor = new THREE.Color(0xffa500);
-    const currentFogColor = new THREE.Color(fogParamsRef.current.color);
-    const fogObject = {
-      r: currentFogColor.r,
-      g: currentFogColor.g,
-      b: currentFogColor.b,
-      near: fogParamsRef.current.near,
-      far: fogParamsRef.current.far,
-    };
-
-    fogTweenRef.current = gsap.to(fogObject, {
-      duration: 3,
-      ease: "power1.out",
-      r: targetFogColor.r,
-      g: targetFogColor.g,
-      b: targetFogColor.b,
-      near: 15,
-      far: 100,
-      onUpdate: () => {
-        const newColor = new THREE.Color(fogObject.r, fogObject.g, fogObject.b);
-        setFogParams({
-          color: newColor.getHex(),
-          near: fogObject.near,
-          far: fogObject.far,
-        });
-      },
-    });
-
-    const targetSkyColor = new THREE.Color(0xffa500);
-    const currentSkyColor = new THREE.Color(skyColorRef.current);
-    const skyObject = {
-      r: currentSkyColor.r,
-      g: currentSkyColor.g,
-      b: currentSkyColor.b,
-    };
-
-    skyTweenRef.current = gsap.to(skyObject, {
-      duration: 3,
-      ease: "power1.out",
-      r: targetSkyColor.r,
-      g: targetSkyColor.g,
-      b: targetSkyColor.b,
-      onUpdate: () => {
-        const newSky = new THREE.Color(skyObject.r, skyObject.g, skyObject.b);
-        setSkyColor(newSky.getHex());
-      },
-    });
-
-    setCurrentAtmosphere("sunset");
+    changeAtmosphere(0xffa500, 0xffa500, 15, 100, "sunset");
   };
 
   // --- Update skybox when currentAtmosphere changes ---
   useEffect(() => {
     if (!sceneRef.current) return;
-    // Use the preloaded cube texture if available.
     const cubeTexture = skyboxTexturesRef.current[currentAtmosphere];
-    if (!cubeTexture) return; // Texture might not have loaded yet.
+    if (!cubeTexture) return;
 
-    // Remove previous skybox if present.
     if (skyboxRef.current && sceneRef.current) {
       if (Array.isArray(skyboxRef.current.material)) {
         skyboxRef.current.material.forEach((mat) => {
@@ -467,9 +486,24 @@ export default function SimulatedGame({
   }, [currentAtmosphere]);
 
   const handleGoBack = () => {
-    setFogParams({ color: 0x1c1c1c, near: 10, far: 50 });
+    // Kill any ongoing fog and sky animations
+    if (fogTweenRef.current) fogTweenRef.current.kill();
+    if (skyTweenRef.current) skyTweenRef.current.kill();
+
+    const defaultFogParams = { color: 0x1c1c1c, near: 10, far: 50 };
+    setFogParams(defaultFogParams);
     setSkyColor(0xffffff);
     setCurrentAtmosphere("foggy");
+
+    // Update the scene fog parameters directly
+    if (sceneRef.current) {
+      sceneRef.current.fog = new THREE.Fog(
+        defaultFogParams.color,
+        defaultFogParams.near,
+        defaultFogParams.far
+      );
+    }
+
     ChangeState();
   };
 

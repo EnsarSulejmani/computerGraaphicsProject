@@ -12,6 +12,7 @@ type Props = {
     CameraRotationState: number;
     CameraMovement: number;
   };
+  modelsLoaded: boolean;
 };
 
 export default function InfinitePlain({
@@ -19,10 +20,11 @@ export default function InfinitePlain({
   hasBuildingSelected,
   ChangeState,
   animationVariables,
+  modelsLoaded,
 }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
 
-  // Animation variables as refs
+  // Animation variables as refs.
   const speedRef = useRef(animationVariables.SpeedPlane);
   const rotationRef = useRef(animationVariables.CameraRotationState);
   const movementRef = useRef(animationVariables.CameraMovement);
@@ -40,7 +42,6 @@ export default function InfinitePlain({
   useEffect(() => {
     if (!mountRef.current) return;
 
-    // Scene Setup
     const scene = new THREE.Scene();
     scene.fog = new THREE.Fog(0x1c1c1c, 10, 50);
 
@@ -76,19 +77,18 @@ export default function InfinitePlain({
     directionalLight.position.set(10, 20, 0);
     scene.add(directionalLight);
 
+    const clock = new THREE.Clock();
+
     const animate = () => {
       requestAnimationFrame(animate);
-
-      // Update based on refs
-      const speed = speedRef.current;
-      const cameraMove = movementRef.current;
-      const cameraRot = rotationRef.current;
-
-      plane.position.z = (plane.position.z + speed) % 10;
+      const delta = clock.getDelta();
+      // Animate plane movement automatically.
+      plane.position.z = (plane.position.z + speedRef.current * delta) % 10;
       gridHelper.position.z = plane.position.z;
 
-      camera.position.y = cameraMove;
-      camera.rotation.x = cameraRot;
+      // Keep camera vertical position and rotation constant.
+      camera.position.y = movementRef.current;
+      camera.rotation.x = rotationRef.current;
 
       renderer.render(scene, camera);
     };
@@ -124,12 +124,18 @@ export default function InfinitePlain({
           architecture firm.
         </p>
         {hasBuildingSelected ? (
-          <button
-            onClick={ChangeState}
-            className="border-2 border-white px-4 py-2 rounded-md my-2 hover:bg-yellow-300"
-          >
-            View in 3D
-          </button>
+          modelsLoaded ? (
+            <button
+              onClick={ChangeState}
+              className="border-2 border-white px-4 py-2 rounded-md my-2 hover:bg-yellow-300"
+            >
+              View in 3D
+            </button>
+          ) : (
+            <button className="border-2 border-white px-4 py-2 rounded-md my-2">
+              Loading...
+            </button>
+          )
         ) : (
           <a href="#catalogue" className="border-2 border-white px-4 py-2">
             Catalogue
